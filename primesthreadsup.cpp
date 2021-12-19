@@ -1,14 +1,28 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <vector>
+#include <iterator>
+#include<numeric>
 
+const auto processor_count = std::thread::hardware_concurrency();
+std::vector<int> threadcount{};
+
+void mapper()
+{
+    int iter = 1;
+    while (processor_count > threadcount.size()) {
+        threadcount.push_back(iter);
+        ++iter;
+    }
+}
 void looper(int x, int y, int z, int& d)
 {
 
     while (y > z)
     {
         if (y % 2 == 0)
-        { 
+        {
             --y;
         }
         else if (x % y == 0)
@@ -24,62 +38,93 @@ void looper(int x, int y, int z, int& d)
 
 void primes(int x)
 {
-    int g{ 4 };
+    unsigned int threadsize = threadcount.size();
+    int g = threadsize;
     while (x > g)
     {
         if (g % 2 == 0)
         {
             ++g;
         }
-        int y{ g };
-        int threadyone{ y };
-        int threadytwo{};
-        int threadythree{};
-        int threadyfour{};
-        int divcount{};
-        if (threadyone % 4 != 0)
+        
+        std::vector<int> threaddiv{};
+        for (int i = 0; i < threadcount.size(); i++)
         {
-            while (threadyone % 4 != 0)
+            threaddiv.push_back(threadcount[i]);
+        }
+        
+
+        int y{ g };
+        int divcount{};
+        int newthready = y;
+        
+        if (newthready % threadsize != 0)
+        {
+            while (newthready % threadsize != 0)
             {
-                --threadyone;
+                --newthready;
             }
-            threadytwo = (threadyone / 4) * 3;
-            threadythree = (threadyone / 4) * 2;
-            threadyfour = (threadyone / 4);
+            for(int i = 0; i < threaddiv.size(); i++)
+            {
+                int tempspace = threadcount[i];
+                threaddiv[i] = (newthready / threadsize) * tempspace;
+            }
+            threaddiv.back() = y;
         }
         else
         {
-            threadytwo = (y / 4) * 3;
-            threadythree = (y / 4) * 2;
-            threadyfour = (y / 4);
+            for (int i = 0; i < threaddiv.size(); i++)
+            {
+                int tempspace = threadcount[i];
+                threaddiv[i] = (newthready / threadsize) * tempspace;
+            }
+            threaddiv.back() = y;
         }
-        int d1{};
-        int d2{};
-        int d3{};
-        int d4{};
-        std::thread t1(looper, g, y, threadytwo, std::ref(d1));
-        std::thread t2(looper, g, threadytwo, threadythree, std::ref(d2));
-        std::thread t3(looper, g, threadythree, threadyfour, std::ref(d3));
-        std::thread t4(looper, g, threadyfour, 0, std::ref(d4));
-        t1.join();
-        t2.join();
-        t3.join();
-        t4.join();
-        divcount = d1 + d2 + d3 + d4;
+        
+       
+        std::vector<int> divisorcount{};
+        int newdivcount = 0;
+        while (processor_count > divisorcount.size()) {
+            divisorcount.push_back(newdivcount);            
+        }
+        
+        std::vector<std::thread> actualThreads;
+        threaddiv.insert(threaddiv.begin(), 0);
+        for (int i = 0; i < threadcount.size(); i++) {
+            std::thread th(looper, g, threaddiv[i + 1], threaddiv[i], std::ref(divisorcount[i]));
+            actualThreads.push_back(std::move(th));
+        }
+
+        
+        for (std::thread& th : actualThreads)
+        {
+            // If thread Object is Joinable then Join that thread.
+            if (th.joinable())
+                th.join();
+        }
+
+               
+        divcount = std::accumulate(divisorcount.begin(), divisorcount.end(), 0);
         if (divcount == 2)
         {
             std::cout << g << " is prime\n";
         }
         else { std::cout << g << " is not prime\n"; }
+
+        divisorcount.clear();
+        threaddiv.clear();
+        actualThreads.clear();
+
         ++g;
     }
 }
-int main(int argc, char* argv[])
+int main()
 {
-    std::stringstream convert{ argv[1] };
     int num{};
-    if (!(convert >> num))
-        num = 0;
+    std::cout << "enter a number" << std::endl;
+    std::cin >> num;
+    mapper();
     primes(num);
+    std::cout << threadcount.size();
     return 0;
 }

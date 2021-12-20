@@ -1,0 +1,1 @@
+Just did this to mess about, a little prime number brute forcer that programmaticaly creates threads based on the number of threads the processor has (blah blah, scheduler, blah thousands of threads blah) 

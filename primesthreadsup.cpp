@@ -3,7 +3,7 @@
 #include <thread>
 #include <vector>
 #include <iterator>
-#include<numeric>
+#include <numeric>
 
 const auto processor_count = std::thread::hardware_concurrency();
 std::vector<int> threadcount{};
